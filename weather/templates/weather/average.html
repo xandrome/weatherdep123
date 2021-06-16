@@ -1,0 +1,24 @@
+<html>
+        <body>
+                Srednia temperatura woj.{{ voivo_name }} to : {{ average }} </br>
+                Dane:
+                <table border="2">
+                        <tr>
+                                <td> Miejscowość </td>
+                                <td> Temperatura </td>
+                                <td> Data </td>
+                                <td> Powiat </td>
+                        </tr>
+                        {% for object in voi %}
+                                <tr>
+                                        <td style="text-align:center">{{ object.town.name }}</td>
+                                        <td style="text-align:center">{{ object.value }}</td>
+                                        <td style="text-align:center">{{ object.timestamp }}</td>
+                                        <td style="text-align:center">{{ object.town.district.name }}</td>
+                                </tr>
+                        {% endfor %}
+
+                </table>
+        </body>
+
+</html>

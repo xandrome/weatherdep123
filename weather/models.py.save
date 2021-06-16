@@ -1,0 +1,96 @@
+import random
+import datetime
+import requests
+from django.db import models
+from bs4 import BeautifulSoup
+
+
+def get_data_from_drops(latitude, longtitude):
+
+    url = 'https://www.drops.live/' + latitude + "," + longtitude
+    page = requests.get(url).text
+    soup = BeautifulSoup(page, 'lxml')
+    temperature_raw_value = soup.find('span', class_="temp temp left")
+    if not temperature_raw_value:
+        return None
+    temperature = int(temperature_raw_value.text[:-1])
+    if temperature <= 10:
+        color = "blue"
+    elif temperature >= 11 and temperature <= 24:
+        color = "green"
+    else:
+        color = "orange"
+    icon = soup.find('img', class_='icon left')
+    icon_src = 'https://www.drops.live' + icon['src']
+    city = soup.find('span', class_='city').text
+    display_that = {'temperature': str(temperature),
+                    'city': city, 'icon': icon_src, 'color': color}
+
+    return display_that
+
+
+class WeatherLocationManager(models.Manager):
+
+    def change_temperature(self, dt):
+        for weather_location in self.all():
+            weather_location.change_temperature(dt)
+
+    def recent_results(self):
+        return self.all().order_by('access_datetime')[:5]
+
+    def create_random_locations(self, count):
+        i = 0
+        while i < count:
+            latitude = str(round(random.uniform(-90, 90), 6))
+            longtitude = str(round(random.uniform(-180, 180), 6))
+            context = get_data_from_drops(latitude, longtitude)
+            if not context:
+                continue
+            print(context)
+            self.create(
+                icon=context['icon'],
+                location=latitude+","+longtitude,
+                temperature=context['temperature'],
+                city=context['city'])
+            i += 1
+
+
+class WeatherLocation(models.Model):
+    access_datetime = models.DateTimeField(auto_now_add=True)
+    icon = models.CharField(max_length=50)
+    location = models.CharField(max_length=50)
+    temperature = models.CharField(max_length=10)
+    city = models.CharField(max_length=20)
+
+    objects = WeatherLocationManager()
+
+    def change_temperature(self, dt):
+        int_temperature = int(self.temperature[:-1])
+        self.temperature = str(int_temperature + dt) + self.temperature[-1]
+        self.save()
+
+#FOR POLAND
+
+
+class Voivodeship(models.Model):
+    name = models.CharField(unique=True, max_length=50)
+
+
+class District(models.Model):
+    voivodeship = models.ForeignKey('weather.Voivodeship')
+    name = models.CharField(unique=True, max_lenght=50)
+
+
+
+class Town(models.Model):
+    district = models.ForeignKey('weather.District')
+    name = models.CharField(max_lenght=50)
+
+    class Meta:
+        unique_together = [['district', 'name']]
+
+
+class TemperatureData(models.Model):
+    town = models.ForeignKey('weather.Town')
+    value = models.IntegerField()
+    timestamp = models.DateTimeField(auto_add_now=True)

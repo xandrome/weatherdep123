@@ -1,0 +1,22 @@
+<html>
+	<body>
+		<table border="2">
+			<tr>
+				<td style="text-align:center"> access_datetime </td>
+				<td style="text-align:center"> icon </td>
+				<td style="text-align:center"> temperature </td>
+				<td style="text-align:center"> city </td>
+				<td style="text-align:center"> location </td>
+			</tr>
+			{% for item in query_list %}
+			<tr>
+				<td style="text-align:center"> {{ item.access_datetime }} </td>
+				<td><img src="{{ item.icon }}"></td>
+				<td style="text-align:center"> {{ item.temperature }} </td>
+				<td style="text-align:center"> {{ item.city }} </td>
+				<td style="text-align:center"> {{ item.location }} </td>
+			</tr>
+			{% endfor %}
+		</table>
+	</body>
+</html>
